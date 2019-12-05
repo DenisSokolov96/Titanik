@@ -1,36 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier, plot_tree
-
-
-def Titanic():
-    print("func titanic")
-    sns.set_style('whitegrid')
-    # get titanic & test csv files as a DataFrame
-    titanic_df = pd.read_csv("datas/train.csv")
-
-    # preview the data
-    titanic_df.head()
-    titanic_df.info()
-    print("----------------------------")
-    titanic_df['title'] = titanic_df['Name'].apply(get_title).apply(title_map)
-    title_xt = pd.crosstab(titanic_df['title'], titanic_df['Survived'])
-    # title_xt_pct = title_xt.div(title_xt.sum(1).astype(float), axis=0)
-
-    # title_xt_pct.plot(kind='bar',
-    #                  stacked=True,
-    #                  title='Рейтинг выживания по названию')
-    plt.xlabel('заглавие')
-    plt.ylabel('Процент выживаемости')
-    # plt.show()
-    plt.figure()
-    # iris = load_iris()
-    # my_tree_one = DecisionTreeClassifier().fit(iris.data, iris.target)
-    my_tree_one = DecisionTreeClassifier().fit(title_xt, title_xt)
-    plot_tree(my_tree_one, filled=True)  # построить дерево с заполнением
-    plt.show()
+from pygments.formatters import img
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, plot_tree, export_graphviz
 
 
 def get_title(name):
@@ -53,7 +25,7 @@ def title_map(title):
         return 2
 
 
-def Titanic2():
+def Titanic():
     train = pd.read_csv('datas/train.csv')
 
     # impute number values and missing values
@@ -63,15 +35,37 @@ def Titanic2():
     train["Fare"] = train["Fare"].fillna(train["Fare"].median())
 
     train['title'] = train['Name'].apply(get_title).apply(title_map)
-    #title_xt = pd.crosstab(train['title'], train['Survived'])
-    title_xt = pd.crosstab(train['title'],train["Age"])
-    title_yt = pd.crosstab(train['title'],train["Pclass"])
+    # title_xt = pd.crosstab(train['title'], train['Survived'])
+    title_xt = pd.crosstab(train['title'], train["Age"])
+    title_yt = pd.crosstab(train['title'], train["Pclass"])
 
     plt.figure("Дерево")
-    my_tree_one = DecisionTreeClassifier().fit(title_xt, title_yt )
+    my_tree_one = DecisionTreeClassifier( max_depth = 4).fit(title_xt, title_yt)
     plot_tree(my_tree_one, filled=True)  # построить дерево с заполнением
     plt.show()
 
 
+def Sample():
+    df = pd.read_csv('datas/train.csv')
+    df.head()
+    #df['Age'] = df['Age'].factorize()[0]
+    #df.head()
+    #формирование матрицы признаков и результирующий столбец
+    #x = df.drop('Age', axis=1)
+    #y = df['Age']
+    #x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+    tree = DecisionTreeClassifier(max_depth=4)
+    df['title'] = df['Name'].apply(get_title).apply(title_map)
+    x_train = pd.crosstab(df['title'], df["Age"])
+    y_train = pd.crosstab(df['title'], df["Pclass"])
+    tree.fit(x_train, y_train)
+    plot_tree(tree, filled=True)  # построить дерево с заполнением
+    plt.show()
+    tree.score(x_train, y_train)
+    #export_graphviz(tree, out_file='datas/pic.dot', feature_names = x.columns, filled=True)
+    # ! dot -Tpng datas/pic.dot -o datas/pic.png
+    # <img src='datas/pic.png'>
+
+
 if __name__ == '__main__':
-    Titanic2()
+    Titanic()
