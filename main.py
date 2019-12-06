@@ -10,12 +10,12 @@ def Titanic():
     X = pd.read_csv('datas/train.csv')
     # указываем зависимую перменную
     y = X['Survived']
-    X.head()
+    #X.head()
     # смотрим, как распределены выжившие в зависимости от пола
     X[["Sex", "Survived"]].groupby(['Sex'], as_index=False).mean().sort_values(by='Survived', ascending=False)
     # удаляем из входов зависимую перменную и незначимые  признаки
     X.drop(['Survived', 'Name', 'PassengerId', 'Ticket'], axis=1, inplace=True)
-    X.head()
+    #X.head()
     #X.info()
     # в поле Cabin много пропусков, удалим и его
     X.drop(['Cabin'], axis=1, inplace=True)
@@ -50,6 +50,7 @@ def Titanic():
 
     plot_tree(clf, filled=True)
     plt.show()
+
 
     export_graphviz(clf, out_file='datas/pic.dot')
 
