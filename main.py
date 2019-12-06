@@ -22,7 +22,7 @@ def Titanic():
     axs[0].bar(names, values)
     axs[1].scatter(names, values)
     axs[2].plot(names, values)
-    fig.suptitle('Categorical Plotting')
+    fig.suptitle('Categorical Plotting!')
     td.Survived()
     plt.show()
 
