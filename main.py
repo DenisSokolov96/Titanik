@@ -1,70 +1,58 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from pygments.formatters import img
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier, plot_tree, export_graphviz
-
-
-def get_title(name):
-    if '.' in name:
-        return name.split(',')[1].split('.')[0].strip()
-    else:
-        return 'Unknown'
-
-
-def title_map(title):
-    if title in ['Mr']:
-        return 1
-    elif title in ['Master']:
-        return 3
-    elif title in ['Ms', 'Mlle', 'Miss']:
-        return 4
-    elif title in ['Mme', 'Mrs']:
-        return 5
-    else:
-        return 2
+import eli5
+from sklearn import tree
 
 
 def Titanic():
-    train = pd.read_csv('datas/train.csv')
+    X = pd.read_csv('datas/train.csv')
+    # указываем зависимую перменную
+    y = X['Survived']
+    X.head()
+    # смотрим, как распределены выжившие в зависимости от пола
+    X[["Sex", "Survived"]].groupby(['Sex'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+    # удаляем из входов зависимую перменную и незначимые  признаки
+    X.drop(['Survived', 'Name', 'PassengerId', 'Ticket'], axis=1, inplace=True)
+    X.head()
+    X.info()
+    # в поле Cabin много пропусков, удалим и его
+    X.drop(['Cabin'], axis=1, inplace=True)
+    X['Embarked'].describe()
+    # дозаполняем пропуски
+    X['Age'].fillna(X['Age'].median(), inplace=True)
+    X['Embarked'].fillna('S', inplace=True)
+    X.info()
+    # кодируем поле Embarked методом дамми-кодирования
+    X = pd.concat([X, pd.get_dummies(X['Embarked'], prefix="Embarked")], axis=1)
+    # удаляем старое поле Embarked
+    X.drop(['Embarked'], axis=1, inplace=True)
+    # кодируем поле обычным способом (0 и 1)
+    X['Sex'] = pd.factorize(X['Sex'])[0]
+    X.info()
+    # делим выборку на обучающую и тестовую
+    X_train = X[:-200]
+    X_test = X[-200:]
+    y_train = y[:-200]
+    y_test = y[-200:]
 
-    # impute number values and missing values
-    train["Embarked"] = train["Embarked"].fillna("S")
-    train["Age"] = train["Age"].fillna(train["Age"].median())
-    train["Pclass"] = train["Pclass"].fillna(train["Pclass"].median())
-    train["Fare"] = train["Fare"].fillna(train["Fare"].median())
+    clf = tree.DecisionTreeClassifier(max_depth=5, random_state=21)
+    clf.fit(X_train, y_train)
+    clf.score(X_train, y_train)
+    clf.score(X_test, y_test)
 
-    train['title'] = train['Name'].apply(get_title).apply(title_map)
-    # title_xt = pd.crosstab(train['title'], train['Survived'])
-    title_xt = pd.crosstab(train['title'], train["Age"])
-    title_yt = pd.crosstab(train['title'], train["Pclass"])
+    rfc = RandomForestClassifier(n_estimators=10, max_depth=5, random_state=21)
+    rfc.fit(X_train, y_train)
+    rfc.score(X_test, y_test)
 
-    plt.figure("Дерево")
-    my_tree_one = DecisionTreeClassifier( max_depth = 4).fit(title_xt, title_yt)
-    plot_tree(my_tree_one, filled=True)  # построить дерево с заполнением
+    eli5.explain_weights_sklearn(clf, feature_names=X_train.columns.values)
+    plot_tree(clf, filled=True)  # построить дерево с заполнением
     plt.show()
 
+    export_graphviz(clf, out_file='datas/pic.dot')
 
-def Sample():
-    df = pd.read_csv('datas/train.csv')
-    df.head()
-    #df['Age'] = df['Age'].factorize()[0]
-    #df.head()
-    #формирование матрицы признаков и результирующий столбец
-    #x = df.drop('Age', axis=1)
-    #y = df['Age']
-    #x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
-    tree = DecisionTreeClassifier(max_depth=4)
-    df['title'] = df['Name'].apply(get_title).apply(title_map)
-    x_train = pd.crosstab(df['title'], df["Age"])
-    y_train = pd.crosstab(df['title'], df["Pclass"])
-    tree.fit(x_train, y_train)
-    plot_tree(tree, filled=True)  # построить дерево с заполнением
-    plt.show()
-    tree.score(x_train, y_train)
-    #export_graphviz(tree, out_file='datas/pic.dot', feature_names = x.columns, filled=True)
-    # ! dot -Tpng datas/pic.dot -o datas/pic.png
-    # <img src='datas/pic.png'>
+    #export_graphviz(clf, out_file='datas/pic.dot', feature_names=X_train.columns, filled=True)
 
 
 if __name__ == '__main__':
