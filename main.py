@@ -28,7 +28,6 @@ def Titanic():
     X = pd.concat([X, pd.get_dummies(X['Embarked'], prefix="Embarked")], axis=1)
     # удаляем старое поле Embarked
     X.drop(['Embarked'], axis=1, inplace=True)
-    # кодируем поле обычным способом (0 и 1)
     X['Sex'] = pd.factorize(X['Sex'])[0]
     #X.info()
     # делим выборку на обучающую и тестовую
